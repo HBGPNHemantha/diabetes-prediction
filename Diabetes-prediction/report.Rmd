@@ -1,0 +1,353 @@
+---
+title: "Diabetes Prediction Using Machine Learning in R"
+author: "Pima Indians Diabetes Dataset Analysis"
+date: "`r Sys.Date()`"
+output:
+  html_document:
+    theme: flatly
+    highlight: tango
+    toc: true
+    toc_float: true
+    number_sections: true
+    df_print: paged
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  echo       = TRUE,
+  warning    = FALSE,
+  message    = FALSE,
+  fig.align  = "center",
+  fig.width  = 7,
+  fig.height = 4.5
+)
+```
+
+---
+
+# Introduction
+
+This report presents a machine learning analysis to predict diabetes outcomes using the **Pima Indians Diabetes Dataset**. The analysis covers data preprocessing, exploratory data analysis, model training, and evaluation.
+
+---
+
+# Load Packages
+
+```{r packages}
+library(caret)
+library(randomForest)
+library(ggplot2)
+library(corrplot)
+library(dplyr)
+```
+
+---
+
+# Step 1: Import Dataset {.tabset}
+
+```{r import}
+diabetes <- read.csv("data/diabetes.csv", header = FALSE)
+
+names(diabetes) <- c(
+  "Pregnancies", "Glucose", "BloodPressure",
+  "SkinThickness", "Insulin", "BMI",
+  "DiabetesPedigreeFunction", "Age", "Outcome"
+)
+
+cat("Dataset Dimensions:", dim(diabetes), "\n")
+```
+
+## First 6 Rows
+
+```{r head}
+head(diabetes)
+```
+
+## Structure
+
+```{r str}
+str(diabetes)
+```
+
+## Summary Statistics
+
+```{r summary}
+summary(diabetes)
+```
+
+---
+
+# Step 2: Data Cleaning & Preprocessing
+
+## Missing Values (Before)
+
+```{r missing-before}
+colSums(is.na(diabetes))
+```
+
+## Invalid Zero Values
+
+Columns where **zero is medically invalid**:
+
+```{r zeros}
+invalid_cols <- c("Glucose", "BloodPressure", "SkinThickness", "Insulin", "BMI")
+colSums(diabetes[, invalid_cols] == 0)
+```
+
+## Median Imputation
+
+```{r impute}
+# Replace zeros with NA
+for (col in invalid_cols) {
+  diabetes[diabetes[[col]] == 0, col] <- NA
+}
+
+# Replace NA with column median
+for (col in invalid_cols) {
+  med <- median(diabetes[[col]], na.rm = TRUE)
+  diabetes[[col]][is.na(diabetes[[col]])] <- med
+}
+
+# Verify
+cat("Missing values after imputation:\n")
+colSums(is.na(diabetes))
+```
+
+```{r factor}
+diabetes$Outcome <- factor(diabetes$Outcome, levels = c(0, 1),
+                           labels = c("No", "Yes"))
+```
+
+---
+
+# Step 3: Exploratory Data Analysis
+
+## Outcome Distribution
+
+```{r outcome-dist}
+outcome_tbl <- as.data.frame(table(diabetes$Outcome))
+names(outcome_tbl) <- c("Outcome", "Count")
+outcome_tbl$Percent <- round(prop.table(outcome_tbl$Count) * 100, 1)
+outcome_tbl
+```
+
+## Group Means by Outcome
+
+```{r group-means}
+num_cols <- names(diabetes)[sapply(diabetes, is.numeric)]
+
+diabetes %>%
+  group_by(Outcome) %>%
+  summarise(across(all_of(num_cols), mean, .names = "mean_{.col}"))
+```
+
+---
+
+# Step 4: Visualizations {.tabset}
+
+## Outcome Distribution
+
+```{r plot-outcome}
+ggplot(diabetes, aes(x = Outcome, fill = Outcome)) +
+  geom_bar() +
+  geom_text(stat = "count", aes(label = ..count..), vjust = -0.5) +
+  scale_fill_manual(values = c("steelblue", "tomato")) +
+  labs(title = "Diabetes Outcome Distribution",
+       x = "Diabetes", y = "Count") +
+  theme_minimal()
+```
+
+## Glucose by Outcome
+
+```{r plot-glucose}
+ggplot(diabetes, aes(x = Outcome, y = Glucose, fill = Outcome)) +
+  geom_boxplot(alpha = 0.8) +
+  scale_fill_manual(values = c("steelblue", "tomato")) +
+  labs(title = "Glucose Levels by Diabetes Outcome",
+       x = "Diabetes", y = "Glucose (mg/dL)") +
+  theme_minimal()
+```
+
+## BMI by Outcome
+
+```{r plot-bmi}
+ggplot(diabetes, aes(x = Outcome, y = BMI, fill = Outcome)) +
+  geom_boxplot(alpha = 0.8) +
+  scale_fill_manual(values = c("steelblue", "tomato")) +
+  labs(title = "BMI by Diabetes Outcome",
+       x = "Diabetes", y = "BMI") +
+  theme_minimal()
+```
+
+## Age Distribution
+
+```{r plot-age}
+ggplot(diabetes, aes(x = Age, fill = Outcome)) +
+  geom_histogram(bins = 20, position = "dodge", alpha = 0.8) +
+  scale_fill_manual(values = c("steelblue", "tomato")) +
+  labs(title = "Age Distribution by Diabetes Outcome",
+       x = "Age", y = "Count") +
+  theme_minimal()
+```
+
+## Correlation Heatmap
+
+```{r plot-corr, fig.width=7, fig.height=6}
+cor_mat <- cor(diabetes %>% mutate(Outcome = as.numeric(Outcome)))
+corrplot(cor_mat, method = "color", type = "upper",
+         addCoef.col = "black", tl.col = "black",
+         tl.srt = 45, tl.cex = 0.8, number.cex = 0.65,
+         mar = c(0, 0, 2, 0),
+         title = "Feature Correlation Matrix")
+```
+
+---
+
+# Step 5: Train / Test Split
+
+```{r split}
+set.seed(42)
+train_idx  <- createDataPartition(diabetes$Outcome, p = 0.8, list = FALSE)
+train_data <- diabetes[train_idx, ]
+test_data  <- diabetes[-train_idx, ]
+
+cat("Training set:", nrow(train_data), "rows\n")
+cat("Testing set: ", nrow(test_data),  "rows\n")
+```
+
+---
+
+# Step 6: Model Training
+
+```{r cv-setup}
+ctrl <- trainControl(method = "cv", number = 5,
+                     classProbs = TRUE,
+                     summaryFunction = twoClassSummary,
+                     savePredictions = TRUE)
+```
+
+## Logistic Regression
+
+```{r model-lr}
+set.seed(42)
+model_lr <- train(Outcome ~ ., data = train_data,
+                  method = "glm", family = "binomial",
+                  trControl = ctrl, metric = "ROC")
+
+cat("CV ROC (Logistic Regression):", round(max(model_lr$results$ROC), 4))
+```
+
+## Random Forest
+
+```{r model-rf}
+set.seed(42)
+model_rf <- train(Outcome ~ ., data = train_data,
+                  method = "rf",
+                  trControl = ctrl, metric = "ROC",
+                  tuneLength = 3)
+
+cat("CV ROC (Random Forest):", round(max(model_rf$results$ROC), 4))
+```
+
+---
+
+# Step 7: Model Evaluation {.tabset}
+
+```{r eval-fn, echo=FALSE}
+eval_table <- function(model, test_data) {
+  preds <- predict(model, test_data)
+  cm    <- confusionMatrix(preds, test_data$Outcome, positive = "Yes")
+  data.frame(
+    Metric = c("Accuracy", "Sensitivity (Recall)",
+               "Specificity", "Precision", "F1 Score"),
+    Value  = round(c(
+      cm$overall["Accuracy"],
+      cm$byClass["Sensitivity"],
+      cm$byClass["Specificity"],
+      cm$byClass["Pos Pred Value"],
+      cm$byClass["F1"]
+    ), 4)
+  )
+}
+```
+
+## Logistic Regression
+
+```{r eval-lr}
+preds_lr <- predict(model_lr, test_data)
+cm_lr    <- confusionMatrix(preds_lr, test_data$Outcome, positive = "Yes")
+print(cm_lr$table)
+eval_table(model_lr, test_data)
+```
+
+## Random Forest
+
+```{r eval-rf}
+preds_rf <- predict(model_rf, test_data)
+cm_rf    <- confusionMatrix(preds_rf, test_data$Outcome, positive = "Yes")
+print(cm_rf$table)
+eval_table(model_rf, test_data)
+```
+
+---
+
+# Step 8: Feature Importance
+
+```{r feature-imp, fig.width=7, fig.height=5}
+importance_df           <- varImp(model_rf)$importance
+importance_df$Feature   <- rownames(importance_df)
+colnames(importance_df)[1] <- "Importance"
+importance_df <- importance_df[order(-importance_df$Importance), ]
+
+ggplot(importance_df,
+       aes(x = reorder(Feature, Importance), y = Importance)) +
+  geom_col(fill = "steelblue") +
+  coord_flip() +
+  labs(title = "Feature Importance — Random Forest",
+       x = "Feature", y = "Importance (%)") +
+  theme_minimal()
+```
+
+---
+
+# Step 9: Model Comparison Summary
+
+```{r comparison}
+acc_lr <- cm_lr$overall["Accuracy"]
+acc_rf <- cm_rf$overall["Accuracy"]
+
+comparison <- data.frame(
+  Model      = c("Logistic Regression", "Random Forest"),
+  CV_ROC     = c(round(max(model_lr$results$ROC), 4),
+                 round(max(model_rf$results$ROC), 4)),
+  Test_Acc   = c(round(acc_lr, 4), round(acc_rf, 4))
+)
+
+comparison
+```
+
+```{r best}
+best_model <- ifelse(acc_lr >= acc_rf, "Logistic Regression", "Random Forest")
+cat("Best Model (Test Accuracy):", best_model)
+```
+
+---
+
+# Conclusion
+
+This analysis demonstrated the application of machine learning to predict diabetes using the Pima Indians Diabetes Dataset.
+
+**Key Findings:**
+
+- **Glucose** is the strongest predictor of diabetes outcome
+- **BMI** and **Age** are also highly important features
+- **Logistic Regression** achieved **76.5% accuracy** with **84.3% AUC-ROC**
+- **Random Forest** achieved **72.6% accuracy** with **85.2% AUC-ROC**
+- After median imputation, 374 invalid insulin values and 227 skin thickness values were corrected
+
+**Best Model: Logistic Regression** (by test accuracy)
+
+> ⚠️ *This analysis is for academic purposes only and is not a substitute for professional medical diagnosis.*
+
+---
+

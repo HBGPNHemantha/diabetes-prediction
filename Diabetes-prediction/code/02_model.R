@@ -1,10 +1,4 @@
 
-# ==========================================
-# DIABETES PREDICTION - MACHINE LEARNING
-# ==========================================
-# Using: Logistic Regression + Random Forest
-# Dataset: Pima Indians Diabetes Dataset
-# ==========================================
 
 
 # ---- Load required packages ----
