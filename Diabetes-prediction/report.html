@@ -1,0 +1,985 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Diabetes Prediction Using Machine Learning</title>
+    <style>
+        * {
+            box-sizing: border-box
+        }
+
+        body {
+            margin: 0;
+            background: #f2f5f9;
+            color: #263445;
+            font: 16px/1.7 Arial, sans-serif
+        }
+
+        .container {
+            max-width: 1100px;
+            margin: 30px auto;
+            padding: 20px;
+            display: grid;
+            grid-template-columns: 220px 1fr;
+            gap: 22px
+        }
+
+        nav,
+        main {
+            background: white;
+            border: 1px solid #dce3eb;
+            border-radius: 10px;
+            padding: 24px
+        }
+
+        nav {
+            position: sticky;
+            top: 20px;
+            height: fit-content
+        }
+
+        nav a {
+            display: block;
+            text-decoration: none;
+            color: #2457a6;
+            padding: 5px 0;
+            font-size: 14px
+        }
+
+        main {
+            padding: 40px
+        }
+
+        h1 {
+            color: #173b68;
+            font-size: 34px;
+            line-height: 1.3
+        }
+
+        h2 {
+            color: #2457a6;
+            border-bottom: 1px solid #ddd;
+            padding-bottom: 8px;
+            margin-top: 38px
+        }
+
+        h3 {
+            color: #304d70;
+            margin-top: 25px
+        }
+
+        p {
+            margin: 12px 0
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 18px 0;
+            font-size: 14px
+        }
+
+        th,
+        td {
+            border: 1px solid #dce3eb;
+            padding: 10px;
+            text-align: left
+        }
+
+        th {
+            background: #eaf0f8
+        }
+
+        tr:nth-child(even) {
+            background: #f8fafc
+        }
+
+        figure {
+            margin: 25px 0;
+            text-align: center
+        }
+
+        figure img {
+            max-width: 100%;
+            max-height: 500px;
+            border: 1px solid #ddd;
+            border-radius: 7px
+        }
+
+        figcaption {
+            font-size: 13px;
+            color: #667085;
+            margin-top: 7px
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px
+        }
+
+        .stat {
+            background: #edf3fb;
+            padding: 15px;
+            border-radius: 8px
+        }
+
+        .stat strong {
+            display: block;
+            font-size: 25px;
+            color: #2457a6
+        }
+
+        .note {
+            background: #edf3fb;
+            border-left: 4px solid #2457a6;
+            padding: 14px;
+            margin: 18px 0
+        }
+
+        button {
+            background: #2457a6;
+            color: white;
+            border: 0;
+            padding: 11px 18px;
+            border-radius: 6px;
+            cursor: pointer
+        }
+
+        .actions {
+            text-align: right;
+            margin-bottom: 20px
+        }
+
+        code {
+            background: #edf0f4;
+            padding: 2px 5px
+        }
+
+        pre {
+            background: #f1f3f6;
+            padding: 15px;
+            overflow: auto
+        }
+
+        footer {
+            border-top: 1px solid #ddd;
+            margin-top: 40px;
+            padding-top: 15px;
+            color: #667085;
+            font-size: 13px
+        }
+
+        @media(max-width:800px) {
+            .container {
+                display: block;
+                margin: 10px;
+                padding: 10px
+            }
+
+            nav {
+                position: static;
+                margin-bottom: 15px
+            }
+
+            nav a {
+                display: inline-block;
+                margin-right: 10px
+            }
+
+            main {
+                padding: 20px
+            }
+
+            .grid {
+                grid-template-columns: 1fr
+            }
+        }
+
+        @media print {
+            body {
+                background: white
+            }
+
+            .container {
+                display: block;
+                margin: 0;
+                padding: 0
+            }
+
+            nav,
+            .actions {
+                display: none
+            }
+
+            main {
+                border: 0;
+                padding: 0
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+
+        <nav>
+            <h3>Report Contents</h3>
+            <a href="#abstract">1. Abstract</a>
+            <a href="#introduction">2. Introduction</a>
+            <a href="#data">3. Data</a>
+            <a href="#methods">4. Methods</a>
+            <a href="#results">5. Results</a>
+            <a href="#discussion">6. Discussion</a>
+            <a href="#conclusion">7. Conclusion</a>
+            <a href="#reproducibility">8. Reproducibility</a>
+            <a href="#references">9. References</a>
+        </nav>
+
+        <main>
+
+            <div class="actions">
+                <button onclick="window.print()">Print / Save as PDF</button>
+            </div>
+
+            <header>
+                <h1>Diabetes Prediction Using Machine Learning</h1>
+                <p><strong>A Comparative Study of Logistic Regression and Random Forest Using R</strong></p>
+                <p>Student: [Enter Your Name]</p>
+                <p>University: [Enter Your University]</p>
+                <p>Academic Machine Learning Project</p>
+            </header>
+
+            <!-- 1 ABSTRACT -->
+            <section id="abstract">
+                <h2>1. Abstract</h2>
+                <p>
+                    Diabetes is a chronic health condition that requires early identification
+                    and appropriate medical care. This project investigates the application
+                    of machine learning techniques to predict diabetes outcomes using the
+                    Pima Indians Diabetes dataset. The dataset contains 768 records and eight
+                    predictor variables. Data preprocessing involved handling invalid zero
+                    values and applying median imputation. Two classification algorithms,
+                    Logistic Regression and Random Forest, were trained using an 80:20
+                    stratified train-test split and five-fold cross-validation. Logistic
+                    Regression achieved a test accuracy of 76.47%, while Random Forest achieved
+                    72.55%. Although Random Forest obtained a slightly higher cross-validation
+                    ROC score, Logistic Regression performed better on the test dataset.
+                    The results demonstrate the potential of machine learning for academic
+                    diabetes prediction analysis. However, these models are not intended
+                    for clinical diagnosis.
+                </p>
+            </section>
+
+            <!-- 2 INTRODUCTION -->
+            <section id="introduction">
+                <h2>2. Introduction</h2>
+
+                <h3>2.1 Background</h3>
+                <p>
+                    Diabetes is a long-term medical condition that affects how the body
+                    regulates blood glucose levels. Early identification of individuals
+                    who may be at risk is important for supporting timely medical assessment
+                    and preventive care.
+                </p>
+                <p>
+                    Machine learning provides techniques for analysing existing data and
+                    identifying patterns that can be used to predict outcomes. Classification
+                    algorithms can learn from patient-related measurements and predict
+                    whether a record belongs to a diabetic or non-diabetic class.
+                </p>
+
+                <h3>2.2 Problem Statement</h3>
+                <p>
+                    The main problem addressed in this project is predicting diabetes
+                    outcomes based on medical measurements such as Glucose, Blood Pressure,
+                    BMI, Insulin and Age.
+                </p>
+
+                <h3>2.3 Aim</h3>
+                <p>
+                    The aim is to develop and compare two supervised machine learning
+                    classification models for diabetes prediction using R.
+                </p>
+
+                <h3>2.4 Objectives</h3>
+                <ul>
+                    <li>Import and understand the diabetes dataset.</li>
+                    <li>Identify and handle invalid zero values.</li>
+                    <li>Perform exploratory data analysis.</li>
+                    <li>Develop Logistic Regression and Random Forest models.</li>
+                    <li>Evaluate model performance using classification metrics.</li>
+                    <li>Identify important prediction features.</li>
+                </ul>
+
+                <h3>2.5 Research Question</h3>
+                <p>
+                    Which model, Logistic Regression or Random Forest, provides better
+                    performance for diabetes prediction using the selected dataset?
+                </p>
+            </section>
+
+            <!-- 3 DATA -->
+            <section id="data">
+                <h2>3. Data</h2>
+
+                <h3>3.1 Dataset Source</h3>
+                <p>
+                    This project uses the Pima Indians Diabetes dataset, a commonly used
+                    benchmark dataset for binary diabetes classification. The dataset is
+                    associated with the National Institute of Diabetes and Digestive and
+                    Kidney Diseases. The original research was published by Smith et al. (1988).
+                </p>
+
+                <h3>3.2 Dataset Description</h3>
+                <div class="grid">
+                    <div class="stat"><strong>768</strong>Total records</div>
+                    <div class="stat"><strong>8</strong>Predictor variables</div>
+                    <div class="stat"><strong>9</strong>Total columns</div>
+                    <div class="stat"><strong>2</strong>Outcome classes</div>
+                </div>
+
+                <table>
+                    <tr>
+                        <th>Variable</th>
+                        <th>Description</th>
+                    </tr>
+                    <tr>
+                        <td>Pregnancies</td>
+                        <td>Number of times pregnant.</td>
+                    </tr>
+                    <tr>
+                        <td>Glucose</td>
+                        <td>Plasma glucose concentration.</td>
+                    </tr>
+                    <tr>
+                        <td>BloodPressure</td>
+                        <td>Diastolic blood pressure.</td>
+                    </tr>
+                    <tr>
+                        <td>SkinThickness</td>
+                        <td>Triceps skin-fold thickness.</td>
+                    </tr>
+                    <tr>
+                        <td>Insulin</td>
+                        <td>Two-hour serum insulin measurement.</td>
+                    </tr>
+                    <tr>
+                        <td>BMI</td>
+                        <td>Body Mass Index.</td>
+                    </tr>
+                    <tr>
+                        <td>DiabetesPedigreeFunction</td>
+                        <td>Diabetes pedigree/family-history function.</td>
+                    </tr>
+                    <tr>
+                        <td>Age</td>
+                        <td>Age in years.</td>
+                    </tr>
+                    <tr>
+                        <td>Outcome</td>
+                        <td>0 = No diabetes, 1 = Diabetes.</td>
+                    </tr>
+                </table>
+
+                <h3>3.3 Outcome Distribution</h3>
+                <table>
+                    <tr>
+                        <th>Outcome</th>
+                        <th>Records</th>
+                        <th>Percentage</th>
+                    </tr>
+                    <tr>
+                        <td>No Diabetes</td>
+                        <td>500</td>
+                        <td>65.10%</td>
+                    </tr>
+                    <tr>
+                        <td>Diabetes</td>
+                        <td>268</td>
+                        <td>34.90%</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Total</strong></td>
+                        <td><strong>768</strong></td>
+                        <td><strong>100%</strong></td>
+                    </tr>
+                </table>
+
+                <h3>3.4 Ethical Considerations</h3>
+                <p>
+                    This project uses an existing dataset and does not collect new personal
+                    health information. The dataset may not represent all populations.
+                    Its redistribution and licensing terms should be checked against the
+                    original source from which the CSV file was obtained.
+                </p>
+            </section>
+
+            <!-- 4 METHODS -->
+            <section id="methods">
+                <h2>4. Methods</h2>
+
+                <h3>4.1 Programming Language and Packages</h3>
+                <p>The project was developed using R version 4.6.2.</p>
+                <table>
+                    <tr>
+                        <th>Package</th>
+                        <th>Purpose</th>
+                    </tr>
+                    <tr>
+                        <td>caret</td>
+                        <td>Model training, data partitioning and evaluation.</td>
+                    </tr>
+                    <tr>
+                        <td>randomForest</td>
+                        <td>Random Forest classification.</td>
+                    </tr>
+                    <tr>
+                        <td>ggplot2</td>
+                        <td>Data visualisation.</td>
+                    </tr>
+                    <tr>
+                        <td>corrplot</td>
+                        <td>Correlation heatmap.</td>
+                    </tr>
+                    <tr>
+                        <td>dplyr</td>
+                        <td>Data manipulation and summaries.</td>
+                    </tr>
+                </table>
+
+                <h3>4.2 Data Import</h3>
+                <p>
+                    The CSV dataset was imported into R using <code>read.csv()</code>.
+                    Column names were assigned manually. Initial inspection showed
+                    768 observations and nine variables.
+                </p>
+
+                <h3>4.3 Data Cleaning</h3>
+                <p>
+                    The initial dataset contained no explicit missing values. However,
+                    zero values in selected medical measurement columns were treated
+                    as invalid or missing values.
+                </p>
+
+                <table>
+                    <tr>
+                        <th>Variable</th>
+                        <th>Invalid zero values</th>
+                    </tr>
+                    <tr>
+                        <td>Glucose</td>
+                        <td>5</td>
+                    </tr>
+                    <tr>
+                        <td>BloodPressure</td>
+                        <td>35</td>
+                    </tr>
+                    <tr>
+                        <td>SkinThickness</td>
+                        <td>227</td>
+                    </tr>
+                    <tr>
+                        <td>Insulin</td>
+                        <td>374</td>
+                    </tr>
+                    <tr>
+                        <td>BMI</td>
+                        <td>11</td>
+                    </tr>
+                </table>
+
+                <p>
+                    These zero values were replaced with NA. Median imputation was then
+                    applied to replace missing values in each selected column.
+                    The Outcome variable was converted into a factor with two levels:
+                    No and Yes.
+                </p>
+
+                <h3>4.4 Exploratory Data Analysis</h3>
+                <p>
+                    Exploratory Data Analysis was performed to understand the dataset.
+                    The analysis included outcome frequencies, percentages, group means,
+                    distributions and correlations between numerical variables.
+                    An IQR-based procedure was also used to count potential outliers.
+                    The identified outliers were not removed from the dataset.
+                </p>
+
+                <h3>4.5 Train-Test Split</h3>
+                <p>
+                    The dataset was divided into training and testing subsets using
+                    <code>createDataPartition()</code> from the caret package.
+                    An 80:20 stratified split was applied with random seed 42.
+                </p>
+                <table>
+                    <tr>
+                        <th>Dataset</th>
+                        <th>Number of records</th>
+                    </tr>
+                    <tr>
+                        <td>Training</td>
+                        <td>615</td>
+                    </tr>
+                    <tr>
+                        <td>Testing</td>
+                        <td>153</td>
+                    </tr>
+                </table>
+
+                <h3>4.6 Logistic Regression</h3>
+                <p>
+                    Logistic Regression was implemented using the binomial Generalized
+                    Linear Model in R. It estimates the probability of a binary outcome
+                    and is commonly used for classification problems.
+                </p>
+
+                <h3>4.7 Random Forest</h3>
+                <p>
+                    Random Forest is an ensemble learning algorithm that combines
+                    predictions from multiple decision trees. The model was trained
+                    using the randomForest method with tuneLength set to 3.
+                </p>
+
+                <h3>4.8 Model Validation</h3>
+                <p>
+                    Five-fold cross-validation was configured using caret. ROC was used
+                    as the model training selection metric. Final predictions were
+                    evaluated on the held-out testing dataset using confusion matrices.
+                </p>
+
+                <div class="note">
+                    <strong>Preprocessing limitation:</strong>
+                    In the current implementation, median imputation was performed
+                    before the train-test split. This creates a potential data leakage
+                    risk because the test data can influence the imputation values.
+                    A better approach is to split the data first and calculate
+                    imputation medians using only the training data.
+                </div>
+            </section>
+
+            <!-- 5 RESULTS -->
+            <section id="results">
+                <h2>5. Results</h2>
+
+                <h3>5.1 Outcome Distribution</h3>
+                <p>
+                    The dataset contains 500 non-diabetic records and 268 diabetic records.
+                    The non-diabetic class represents 65.10% of the dataset, while the
+                    diabetic class represents 34.90%.
+                </p>
+
+                <figure>
+                    <img src="figures/01_outcome_distribution.png" alt="Outcome distribution">
+                    <figcaption>Figure 1. Distribution of diabetes outcome classes.</figcaption>
+                </figure>
+
+                <h3>5.2 Exploratory Visualisations</h3>
+
+                <figure>
+                    <img src="figures/02_glucose_boxplot.png" alt="Glucose boxplot">
+                    <figcaption>Figure 2. Glucose measurements grouped by diabetes outcome.</figcaption>
+                </figure>
+
+                <figure>
+                    <img src="figures/03_bmi_boxplot.png" alt="BMI boxplot">
+                    <figcaption>Figure 3. BMI measurements grouped by diabetes outcome.</figcaption>
+                </figure>
+
+                <figure>
+                    <img src="figures/04_age_distribution.png" alt="Age distribution">
+                    <figcaption>Figure 4. Age distribution by diabetes outcome.</figcaption>
+                </figure>
+
+                <figure>
+                    <img src="figures/05_correlation_heatmap.png" alt="Correlation heatmap">
+                    <figcaption>Figure 5. Correlation heatmap of dataset variables.</figcaption>
+                </figure>
+
+                <h3>5.3 Model Performance Comparison</h3>
+                <p>
+                    The following table presents the actual results obtained from
+                    the R model execution.
+                </p>
+
+                <table>
+                    <tr>
+                        <th>Metric</th>
+                        <th>Logistic Regression</th>
+                        <th>Random Forest</th>
+                    </tr>
+                    <tr>
+                        <td>Cross-validation ROC</td>
+                        <td>0.8433</td>
+                        <td>0.8522</td>
+                    </tr>
+                    <tr>
+                        <td>Test Accuracy</td>
+                        <td><strong>76.47%</strong></td>
+                        <td>72.55%</td>
+                    </tr>
+                    <tr>
+                        <td>Sensitivity</td>
+                        <td>56.60%</td>
+                        <td>56.60%</td>
+                    </tr>
+                    <tr>
+                        <td>Specificity</td>
+                        <td>87.00%</td>
+                        <td>81.00%</td>
+                    </tr>
+                    <tr>
+                        <td>Precision</td>
+                        <td>69.77%</td>
+                        <td>61.22%</td>
+                    </tr>
+                    <tr>
+                        <td>F1 Score</td>
+                        <td>0.6250</td>
+                        <td>0.5882</td>
+                    </tr>
+                </table>
+
+                <p>
+                    Logistic Regression achieved a higher test accuracy of 76.47%.
+                    Random Forest achieved a slightly higher cross-validation ROC
+                    score of 0.8522 compared with 0.8433 for Logistic Regression.
+                </p>
+
+                <h3>5.4 Confusion Matrices</h3>
+
+                <h3>Logistic Regression</h3>
+                <table>
+                    <tr>
+                        <th>Actual / Predicted</th>
+                        <th>No</th>
+                        <th>Yes</th>
+                    </tr>
+                    <tr>
+                        <th>No</th>
+                        <td>87</td>
+                        <td>13</td>
+                    </tr>
+                    <tr>
+                        <th>Yes</th>
+                        <td>23</td>
+                        <td>30</td>
+                    </tr>
+                </table>
+
+                <h3>Random Forest</h3>
+                <table>
+                    <tr>
+                        <th>Actual / Predicted</th>
+                        <th>No</th>
+                        <th>Yes</th>
+                    </tr>
+                    <tr>
+                        <th>No</th>
+                        <td>81</td>
+                        <td>19</td>
+                    </tr>
+                    <tr>
+                        <th>Yes</th>
+                        <td>23</td>
+                        <td>30</td>
+                    </tr>
+                </table>
+
+                <p>
+                    Both models correctly identified 30 of the 53 actual diabetic
+                    records in the test dataset. Therefore, both achieved a sensitivity
+                    of 56.60%. Logistic Regression achieved higher specificity and
+                    precision than Random Forest.
+                </p>
+
+                <h3>5.5 Feature Importance</h3>
+                <p>
+                    Random Forest feature importance analysis identified Glucose as
+                    the most influential predictor in the fitted model, followed by
+                    BMI and Age.
+                </p>
+
+                <figure>
+                    <img src="figures/06_feature_importance.png" alt="Feature importance">
+                    <figcaption>Figure 6. Feature importance scores from Random Forest.</figcaption>
+                </figure>
+
+                <table>
+                    <tr>
+                        <th>Feature</th>
+                        <th>Importance</th>
+                    </tr>
+                    <tr>
+                        <td>Glucose</td>
+                        <td>100.00</td>
+                    </tr>
+                    <tr>
+                        <td>BMI</td>
+                        <td>50.37</td>
+                    </tr>
+                    <tr>
+                        <td>Age</td>
+                        <td>38.32</td>
+                    </tr>
+                    <tr>
+                        <td>DiabetesPedigreeFunction</td>
+                        <td>34.47</td>
+                    </tr>
+                    <tr>
+                        <td>Insulin</td>
+                        <td>10.46</td>
+                    </tr>
+                    <tr>
+                        <td>Pregnancies</td>
+                        <td>7.47</td>
+                    </tr>
+                    <tr>
+                        <td>BloodPressure</td>
+                        <td>6.73</td>
+                    </tr>
+                    <tr>
+                        <td>SkinThickness</td>
+                        <td>0.00</td>
+                    </tr>
+                </table>
+
+                <p><strong>Best model based on test accuracy: Logistic Regression (76.47%).</strong></p>
+
+                <p>
+                    Note: Cross-validation ROC is reported from the training process.
+                    The current script does not calculate a separate ROC-AUC score
+                    from the held-out test predictions.
+                </p>
+            </section>
+
+            <!-- 6 DISCUSSION -->
+            <section id="discussion">
+                <h2>6. Discussion</h2>
+
+                <h3>6.1 Model Performance</h3>
+                <p>
+                    Logistic Regression achieved the highest test accuracy of 76.47%,
+                    compared with 72.55% for Random Forest. However, Random Forest
+                    achieved a slightly higher cross-validation ROC score.
+                    This shows that the model with the highest cross-validation ROC
+                    does not necessarily have the highest test accuracy.
+                </p>
+
+                <p>
+                    Both models achieved 56.60% sensitivity. This means that they
+                    identified 30 of the 53 diabetic cases in the testing dataset
+                    and missed 23 diabetic cases each. This is an important limitation
+                    for a health-related prediction task.
+                </p>
+
+                <h3>6.2 Important Features</h3>
+                <p>
+                    Glucose received the highest Random Forest feature importance
+                    score, followed by BMI and Age. These variables were especially
+                    useful to the fitted Random Forest model when making predictions.
+                    Feature importance does not establish a causal relationship.
+                </p>
+
+                <h3>6.3 Limitations</h3>
+                <ul>
+                    <li><strong>Data leakage:</strong> Median imputation was performed before splitting the data.</li>
+                    <li><strong>Class imbalance:</strong> The dataset contains more non-diabetic records than diabetic
+                        records.</li>
+                    <li><strong>Moderate sensitivity:</strong> Both models identified only 56.60% of diabetic cases in
+                        the test set.</li>
+                    <li><strong>Limited algorithms:</strong> Only two classification algorithms were evaluated.</li>
+                    <li><strong>Dataset generalisation:</strong> The dataset may not represent all populations.</li>
+                    <li><strong>Single split:</strong> Results are based on one train-test split rather than repeated
+                        independent evaluations.</li>
+                </ul>
+
+                <h3>6.4 ROC Event-Level Consideration</h3>
+                <p>
+                    The Outcome factor levels in the current script are ordered as
+                    No and Yes. The default caret twoClassSummary function treats
+                    the first factor level as the event when calculating ROC.
+                    Therefore, the cross-validation ROC calculation should be checked
+                    to ensure that the intended positive class is being evaluated.
+                    The confusion matrix evaluation explicitly uses Yes as the
+                    positive class.
+                </p>
+
+                <h3>6.5 Real-World Implications</h3>
+                <p>
+                    This project demonstrates how machine learning can analyse
+                    structured health-related data and identify patterns useful
+                    for classification. However, the models require further
+                    validation and improvement before any real-world clinical
+                    application could be considered.
+                </p>
+            </section>
+
+            <!-- 7 CONCLUSION -->
+            <section id="conclusion">
+                <h2>7. Conclusion and Future Work</h2>
+
+                <p>
+                    This project developed and evaluated two machine learning models
+                    for diabetes prediction using the Pima Indians Diabetes dataset.
+                    The workflow included data inspection, preprocessing, exploratory
+                    analysis, model training and performance evaluation.
+                </p>
+
+                <p>
+                    Logistic Regression achieved the highest test accuracy of 76.47%,
+                    while Random Forest achieved 72.55%. Random Forest obtained a
+                    slightly higher cross-validation ROC score. Feature importance
+                    analysis identified Glucose, BMI and Age as the top three
+                    predictors in the fitted Random Forest model.
+                </p>
+
+                <h3>Future Improvements</h3>
+                <ul>
+                    <li>Perform train-test splitting before median imputation.</li>
+                    <li>Configure and verify the intended positive class for ROC calculations.</li>
+                    <li>Apply repeated cross-validation.</li>
+                    <li>Evaluate the models on an independent dataset.</li>
+                    <li>Explore additional algorithms such as Support Vector Machines and Gradient Boosting.</li>
+                    <li>Investigate class imbalance and prediction threshold selection.</li>
+                    <li>Calculate test-set ROC-AUC using predicted probabilities.</li>
+                </ul>
+
+                <p>
+                    In conclusion, Logistic Regression was the best-performing model
+                    according to test accuracy in this experiment. Neither model
+                    should be used as a substitute for professional medical diagnosis.
+                </p>
+            </section>
+
+            <!-- 8 REPRODUCIBILITY -->
+            <section id="reproducibility">
+                <h2>8. Reproducibility</h2>
+
+                <h3>8.1 Project Structure</h3>
+                <pre>
+Diabetes-prediction/
+│
+├── data/
+│   └── diabetes.csv
+│
+├── code/
+│   ├── 01_import_check.R
+│   └── 02_model.R
+│
+├── figures/
+│   ├── 01_outcome_distribution.png
+│   ├── 02_glucose_boxplot.png
+│   ├── 03_bmi_boxplot.png
+│   ├── 04_age_distribution.png
+│   ├── 05_correlation_heatmap.png
+│   └── 06_feature_importance.png
+│
+├── Diabetes-prediction.Rproj
+└── report.html
+</pre>
+
+                <h3>8.2 Requirements</h3>
+                <p>
+                    The project was executed using R version 4.6.2 (2026-10-29 ucrt).
+                    The following packages are required:
+                </p>
+                <pre>
+install.packages(c(
+  "caret",
+  "randomForest",
+  "ggplot2",
+  "corrplot",
+  "dplyr"
+))
+</pre>
+
+                <h3>8.3 How to Run</h3>
+                <ol>
+                    <li>Install R and RStudio.</li>
+                    <li>Open the Diabetes-prediction project folder.</li>
+                    <li>Ensure the dataset is located inside the data folder.</li>
+                    <li>Install the required packages.</li>
+                    <li>Run <code>code/01_import_check.R</code> to inspect the dataset.</li>
+                    <li>Run <code>code/02_model.R</code> to train and evaluate the models.</li>
+                    <li>Open report.html in a web browser.</li>
+                </ol>
+
+                <h3>8.4 Reproducibility Notes</h3>
+                <p>
+                    The modelling script uses random seed 42 for the data partition
+                    and model training. This supports reproducibility when the same
+                    dataset, software environment and package versions are used.
+                </p>
+
+                <p>To record the installed package versions, run the following commands in R:</p>
+                <pre>
+sessionInfo()
+packageVersion("caret")
+packageVersion("randomForest")
+packageVersion("ggplot2")
+packageVersion("corrplot")
+packageVersion("dplyr")
+</pre>
+            </section>
+
+            <!-- 9 REFERENCES -->
+            <section id="references">
+                <h2>9. References</h2>
+                <ol>
+                    <li>
+                        Smith, J. W., Everhart, J. E., Dickson, W. C., Knowler, W. C.,
+                        &amp; Johannes, R. S. (1988). Using the ADAP learning algorithm
+                        to forecast the onset of diabetes mellitus.
+                        <em>Proceedings of the Annual Symposium on Computer Application
+                            in Medical Care</em>, 261–265.
+                    </li>
+                    <li>
+                        Kuhn, M. (2008). Building predictive models in R using the caret
+                        package. <em>Journal of Statistical Software, 28</em>(5), 1–26.
+                    </li>
+                    <li>
+                        Liaw, A., &amp; Wiener, M. (2002). Classification and regression
+                        by randomForest. <em>R News, 2</em>(3), 18–22.
+                    </li>
+                    <li>
+                        Wickham, H. (2016). <em>ggplot2: Elegant Graphics for Data Analysis</em>.
+                        Springer.
+                    </li>
+                    <li>
+                        R Core Team. (2026). <em>R: A Language and Environment for
+                            Statistical Computing</em>. R Foundation for Statistical Computing.
+                    </li>
+                    <li>
+                        Wei, T., &amp; Simko, V. <em>R package corrplot: Visualization of
+                            a Correlation Matrix</em>. R package documentation.
+                    </li>
+                    <li>
+                        Kuhn, M., &amp; contributors. <em>caret: Classification and
+                            Regression Training</em>. R package documentation.
+                    </li>
+                </ol>
+
+                <p>
+                    For accurate package citations and versions, run
+                    <code>citation("caret")</code>, <code>citation("randomForest")</code>,
+                    <code>citation("ggplot2")</code>, <code>citation("corrplot")</code>
+                    and <code>citation("dplyr")</code> in your R environment.
+                    Also verify the dataset download source and its licensing terms.
+                </p>
+            </section>
+
+            <footer>
+                <p>
+                    This project is intended for academic and educational purposes only.
+                    The models are not clinically validated and must not be used as a
+                    substitute for professional medical advice, diagnosis or treatment.
+                </p>
+            </footer>
+
+        </main>
+    </div>
+</body>
+
+</html>
