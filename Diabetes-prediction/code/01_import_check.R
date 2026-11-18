@@ -1,7 +1,9 @@
 
-#Import dataset
-diabetes <- read.csv("data/diabetes.csv",header = FALSE)
+# ==========================================
+# 1. IMPORT DATASET
+# ==========================================
 
+diabetes <- read.csv("data/diabetes.csv", header = FALSE)
 
 names(diabetes) <- c(
   "Pregnancies",
@@ -15,33 +17,21 @@ names(diabetes) <- c(
   "Outcome"
 )
 
-#Display first 6 records
+# View dataset
 head(diabetes)
-
-#Display dataset dimensions
 dim(diabetes)
-
-#Display column names
-names(diabetes)
-
-#Check data types
 str(diabetes)
-
-#Summary
 summary(diabetes)
 
-#Check missing val
-colSums(is.na(diabetes)) #is.na-identify missing val,colSum-take column sum
 
-colSums(diabetes[, c(
-  "Glucose",
-  "BloodPressure",
-  "SkinThickness",
-  "Insulin",
-  "BMI"
-)] == 0)
+# ==========================================
+# 2. DATA CLEANING
+# ==========================================
 
-# Replace invalid zero values with NA
+# Check missing values
+colSums(is.na(diabetes))
+
+# Check invalid zeros
 columns <- c(
   "Glucose",
   "BloodPressure",
@@ -50,44 +40,132 @@ columns <- c(
   "BMI"
 )
 
+colSums(diabetes[, columns] == 0)
+
+# Replace invalid zeros with NA
 for (col in columns) {
   diabetes[diabetes[[col]] == 0, col] <- NA
 }
 
-# Check missing values again
-colSums(is.na(diabetes))
-
-
-
-# Replace missing values using median
-
+# Replace NA with median
 for (col in columns) {
   median_value <- median(diabetes[[col]], na.rm = TRUE)
-  
   diabetes[[col]][is.na(diabetes[[col]])] <- median_value
 }
 
-# Check missing values again
+# Verify cleaning
 colSums(is.na(diabetes))
+colSums(diabetes == 0)
 
 
-# Dataset dimensions
+# ==========================================
+# 3. EXPLORATORY DATA ANALYSIS (EDA)
+# ==========================================
+
+# Dataset information
 dim(diabetes)
-
-# Dataset structure
 str(diabetes)
-
-# Statistical summary
 summary(diabetes)
 
-# Count each outcome
+# Outcome distribution
 table(diabetes$Outcome)
-
-# Calculate percentages
 prop.table(table(diabetes$Outcome)) * 100
 
-# Check missing values in each column
-colSums(is.na(diabetes))
+# Select numerical features
+numeric_cols <- setdiff(
+  names(diabetes)[sapply(diabetes, is.numeric)],
+  "Outcome"
+)
 
-# Count zero values in each column
-colSums(diabetes == 0)
+
+# ==========================================
+# 4. OUTLIER DETECTION
+# ==========================================
+
+for (col in numeric_cols) {
+  
+  Q1 <- quantile(diabetes[[col]], 0.25)
+  Q3 <- quantile(diabetes[[col]], 0.75)
+  
+  IQR_value <- Q3 - Q1
+  
+  lower <- Q1 - 1.5 * IQR_value
+  upper <- Q3 + 1.5 * IQR_value
+  
+  outliers <- sum(
+    diabetes[[col]] < lower |
+      diabetes[[col]] > upper
+  )
+  
+  cat(col, ":", outliers, "outliers\n")
+}
+
+
+# ==========================================
+# 5. DATA VISUALIZATION
+# ==========================================
+
+# Boxplots
+par(mfrow = c(2, 4))
+
+for (col in numeric_cols) {
+  boxplot(
+    diabetes[[col]],
+    main = col,
+    col = "lightblue",
+    ylab = "Values"
+  )
+}
+
+par(mfrow = c(1, 1))
+
+
+# Histograms
+par(mfrow = c(2, 4))
+
+for (col in numeric_cols) {
+  hist(
+    diabetes[[col]],
+    main = col,
+    col = "lightblue",
+    xlab = col,
+    breaks = 20
+  )
+}
+
+par(mfrow = c(1, 1))
+
+
+# ==========================================
+# 6. CORRELATION ANALYSIS
+# ==========================================
+
+# Calculate correlation matrix
+cor_matrix <- cor(diabetes)
+
+# Display correlation values
+round(cor_matrix, 2)
+
+# Correlation heatmap
+library(corrplot)
+
+corrplot(
+  cor_matrix,
+  method = "color",
+  type = "upper",
+  addCoef.col = "black",
+  tl.col = "black",
+  tl.srt = 45,
+  tl.cex = 0.7,
+  number.cex = 0.6,
+  mar = c(0, 0, 2, 0)
+)
+
+# Correlation with Outcome
+outcome_corr <- cor_matrix[
+  "Outcome",
+  setdiff(colnames(cor_matrix), "Outcome")
+]
+
+# Sort correlations
+sort(outcome_corr, decreasing = TRUE)
